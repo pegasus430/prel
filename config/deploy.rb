@@ -1,10 +1,10 @@
 server '3.95.245.39', port: 22, roles: [:web, :app, :db], primary: true
 
-set :repo_url,        '[YOUR GIT SSH ADDRESS: git@example.com:username/appname.git]'
-set :application,     '[APP_NAME]'
+set :repo_url,        'git@github.com:devcryabit/prel.git'
+set :application,     'prel'
 
 # If using Digital Ocean's Ruby on Rails Marketplace framework, your username is 'rails'
-set :user,            '[USER_NAME]'
+set :user,            'ubuntu'
 set :puma_threads,    [4, 16]
 set :puma_workers,    0
 
@@ -32,8 +32,20 @@ set :puma_init_active_record, true  # Change to false when not using ActiveRecor
 # set :keep_releases, 5
 
 ## Linked Files & Directories (Default None):
-# set :linked_files, %w{config/database.yml}
-# set :linked_dirs,  %w{bin log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system}
+set :linked_files, %w{config/database.yml config/nginx.conf config/secrets.yml}
+set :linked_dirs,  %w{log tmp/pids tmp/cache tmp/sockets vendor/bundle public/system}
+
+def red(str)
+  "\e[31m#{str}\e[0m"
+end
+
+def current_git_branch
+  branch = `git symbolic-ref HEAD 2> /dev/null`.strip.gsub(/^refs\/heads\//, '')
+  puts "Deploying branch #{red branch}"
+  branch
+end
+
+set :branch, current_git_branch
 
 namespace :puma do
   desc 'Create Directories for Puma Pids and Socket'
@@ -48,18 +60,18 @@ namespace :puma do
 end
 
 namespace :deploy do
-  desc "Make sure local git is in sync with remote."
-  task :check_revision do
-    on roles(:app) do
+  # desc "Make sure local git is in sync with remote."
+  # task :check_revision do
+  #   on roles(:app) do
 
-      # Update this to your branch name: master, main, etc. Here it's main
-      unless `git rev-parse HEAD` == `git rev-parse origin/main`
-        puts "WARNING: HEAD is not the same as origin/main"
-        puts "Run `git push` to sync changes."
-        exit
-      end
-    end
-  end
+  #     # Update this to your branch name: master, main, etc. Here it's main
+  #     unless `git rev-parse HEAD` == `git rev-parse origin/main`
+  #       puts "WARNING: HEAD is not the same as origin/main"
+  #       puts "Run `git push` to sync changes."
+  #       exit
+  #     end
+  #   end
+  # end
 
   desc 'Initial Deploy'
   task :initial do
@@ -76,7 +88,7 @@ namespace :deploy do
       end
   end
 
-  before :starting,     :check_revision
+  # before :starting,     :check_revision
   after  :finishing,    :compile_assets
   after  :finishing,    :cleanup
   # after  :finishing,    :restart
